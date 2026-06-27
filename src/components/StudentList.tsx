@@ -19,7 +19,8 @@ import {
   Phone, 
   BadgeAlert,
   ArrowRight,
-  BookOpen
+  BookOpen,
+  Printer
 } from 'lucide-react';
 
 interface StudentListProps {
@@ -27,9 +28,10 @@ interface StudentListProps {
   onAddClick: () => void;
   onEditClick: (student: Student) => void;
   onDeleteClick: (id: string) => void;
+  onPrintClick?: (student: Student) => void;
 }
 
-export default function StudentList({ students, onAddClick, onEditClick, onDeleteClick }: StudentListProps) {
+export default function StudentList({ students, onAddClick, onEditClick, onDeleteClick, onPrintClick }: StudentListProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedClass, setSelectedClass] = useState('');
   const [selectedStudentDetails, setSelectedStudentDetails] = useState<Student | null>(null);
@@ -136,12 +138,21 @@ export default function StudentList({ students, onAddClick, onEditClick, onDelet
 
           {/* Quick inline controls from details view */}
           <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-100">
+            {onPrintClick && (
+              <button
+                onClick={() => onPrintClick(selectedStudentDetails)}
+                className="flex items-center gap-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl transition-all shadow-xs cursor-pointer"
+              >
+                <Printer className="w-4 h-4" />
+                طباعة وصل التسجيل
+              </button>
+            )}
             <button
               onClick={() => {
                 onEditClick(selectedStudentDetails);
                 setSelectedStudentDetails(null);
               }}
-              className="flex items-center gap-1 text-xs font-semibold bg-blue-50 text-blue-700 hover:bg-blue-100 px-4 py-2 rounded-xl transition-all cursor-pointer"
+              className="flex items-center gap-1 text-xs font-semibold bg-blue-50 text-blue-700 hover:bg-blue-100 px-4 py-2.5 rounded-xl transition-all cursor-pointer"
             >
               <Edit className="w-3.5 h-3.5" />
               تعديل بيانات الطالب المالية
@@ -277,6 +288,15 @@ export default function StudentList({ students, onAddClick, onEditClick, onDelet
                     {/* Action controls */}
                     <td className="p-3 text-left whitespace-nowrap">
                       <div className="flex gap-1.5 justify-end">
+                        {onPrintClick && (
+                          <button
+                            onClick={() => onPrintClick(student)}
+                            className="p-1.5 hover:bg-gray-100 text-gray-500 hover:text-emerald-700 rounded-lg transition-colors cursor-pointer"
+                            title="طباعة وصل التسجيل مالي"
+                          >
+                            <Printer className="w-4 h-4" />
+                          </button>
+                        )}
                         <button
                           onClick={() => setSelectedStudentDetails(student)}
                           className="p-1.5 hover:bg-gray-100 text-gray-500 hover:text-blue-700 rounded-lg transition-colors cursor-pointer"
@@ -286,7 +306,7 @@ export default function StudentList({ students, onAddClick, onEditClick, onDelet
                         </button>
                         <button
                           onClick={() => onEditClick(student)}
-                          className="p-1.5 hover:bg-gray-100 text-gray-500 hover:text-emerald-700 rounded-lg transition-colors cursor-pointer"
+                          className="p-1.5 hover:bg-gray-100 text-gray-500 hover:text-amber-600 rounded-lg transition-colors cursor-pointer"
                           title="تعديل بيانات الطالب"
                         >
                           <Edit className="w-4 h-4" />

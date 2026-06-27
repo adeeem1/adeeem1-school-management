@@ -15,6 +15,7 @@ export interface Student {
   day: string; // Lecture day
   time: string; // Lecture time
   status: 'active' | 'suspended';
+  paidMonths?: string[]; // Months the student has paid for (e.g. ['أكتوبر', 'نوفمبر'])
 }
 
 export type CompensationType = 'percentage' | 'fixed' | 'hourly';

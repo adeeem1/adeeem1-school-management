@@ -81,6 +81,37 @@ export function isFirebaseReady(): boolean {
   return isFirebaseInitialized && db !== null;
 }
 
+export enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId: string | null;
+  };
+}
+
+function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errInfo: FirestoreErrorInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: 'anonymous'
+    },
+    operationType,
+    path
+  };
+  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  throw new Error(JSON.stringify(errInfo));
+}
+
 /**
  * Sync Students collection in real-time
  */
@@ -91,10 +122,9 @@ export function subscribeToStudents(onUpdate: (students: Student[]) => void): Un
     snapshot.forEach((doc) => {
       list.push(doc.data() as Student);
     });
-    // Sort students by name or id if desired
     onUpdate(list);
   }, (error) => {
-    console.error('Error fetching students snapshot:', error);
+    handleFirestoreError(error, OperationType.LIST, 'students');
   });
 }
 
@@ -110,7 +140,7 @@ export function subscribeToTeachers(onUpdate: (teachers: Teacher[]) => void): Un
     });
     onUpdate(list);
   }, (error) => {
-    console.error('Error fetching teachers snapshot:', error);
+    handleFirestoreError(error, OperationType.LIST, 'teachers');
   });
 }
 
@@ -126,7 +156,7 @@ export function subscribeToPins(onUpdate: (pins: SavedPin[]) => void): Unsubscri
     });
     onUpdate(list);
   }, (error) => {
-    console.error('Error fetching PINs snapshot:', error);
+    handleFirestoreError(error, OperationType.LIST, 'pins');
   });
 }
 
@@ -135,14 +165,24 @@ export function subscribeToPins(onUpdate: (pins: SavedPin[]) => void): Unsubscri
  */
 export async function dbSaveStudent(student: Student) {
   if (!db) return false;
-  await setDoc(doc(db, 'students', student.id), student);
-  return true;
+  try {
+    await setDoc(doc(db, 'students', student.id), student);
+    return true;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, `students/${student.id}`);
+    return false;
+  }
 }
 
 export async function dbDeleteStudent(id: string) {
   if (!db) return false;
-  await deleteDoc(doc(db, 'students', id));
-  return true;
+  try {
+    await deleteDoc(doc(db, 'students', id));
+    return true;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, `students/${id}`);
+    return false;
+  }
 }
 
 /**
@@ -150,14 +190,24 @@ export async function dbDeleteStudent(id: string) {
  */
 export async function dbSaveTeacher(teacher: Teacher) {
   if (!db) return false;
-  await setDoc(doc(db, 'teachers', teacher.id), teacher);
-  return true;
+  try {
+    await setDoc(doc(db, 'teachers', teacher.id), teacher);
+    return true;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, `teachers/${teacher.id}`);
+    return false;
+  }
 }
 
 export async function dbDeleteTeacher(id: string) {
   if (!db) return false;
-  await deleteDoc(doc(db, 'teachers', id));
-  return true;
+  try {
+    await deleteDoc(doc(db, 'teachers', id));
+    return true;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, `teachers/${id}`);
+    return false;
+  }
 }
 
 /**
@@ -165,14 +215,24 @@ export async function dbDeleteTeacher(id: string) {
  */
 export async function dbSavePin(pin: SavedPin) {
   if (!db) return false;
-  await setDoc(doc(db, 'pins', pin.id), pin);
-  return true;
+  try {
+    await setDoc(doc(db, 'pins', pin.id), pin);
+    return true;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, `pins/${pin.id}`);
+    return false;
+  }
 }
 
 export async function dbDeletePin(id: string) {
   if (!db) return false;
-  await deleteDoc(doc(db, 'pins', id));
-  return true;
+  try {
+    await deleteDoc(doc(db, 'pins', id));
+    return true;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, `pins/${id}`);
+    return false;
+  }
 }
 
 /**
@@ -180,26 +240,31 @@ export async function dbDeletePin(id: string) {
  */
 export async function uploadLocalDataToFirebase(students: Student[], teachers: Teacher[], pins: SavedPin[]) {
   if (!db) return false;
-  const batch = writeBatch(db);
-  
-  // Migrate students
-  for (const s of students) {
-    const docRef = doc(db, 'students', s.id);
-    batch.set(docRef, s);
-  }
-  
-  // Migrate teachers
-  for (const t of teachers) {
-    const docRef = doc(db, 'teachers', t.id);
-    batch.set(docRef, t);
-  }
+  try {
+    const batch = writeBatch(db);
+    
+    // Migrate students
+    for (const s of students) {
+      const docRef = doc(db, 'students', s.id);
+      batch.set(docRef, s);
+    }
+    
+    // Migrate teachers
+    for (const t of teachers) {
+      const docRef = doc(db, 'teachers', t.id);
+      batch.set(docRef, t);
+    }
 
-  // Migrate pins
-  for (const p of pins) {
-    const docRef = doc(db, 'pins', p.id);
-    batch.set(docRef, p);
+    // Migrate pins
+    for (const p of pins) {
+      const docRef = doc(db, 'pins', p.id);
+      batch.set(docRef, p);
+    }
+    
+    await batch.commit();
+    return true;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, 'batch-migration');
+    return false;
   }
-  
-  await batch.commit();
-  return true;
 }

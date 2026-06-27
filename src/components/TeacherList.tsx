@@ -16,7 +16,8 @@ import {
   HelpCircle, 
   DollarSign, 
   Calculator,
-  UserCheck
+  UserCheck,
+  Printer
 } from 'lucide-react';
 
 interface TeacherListProps {
@@ -25,9 +26,10 @@ interface TeacherListProps {
   onAddClick: () => void;
   onEditClick: (teacher: Teacher) => void;
   onDeleteClick: (id: string) => void;
+  onPrintClick?: (teacher: Teacher) => void;
 }
 
-export default function TeacherList({ teachers, students, onAddClick, onEditClick, onDeleteClick }: TeacherListProps) {
+export default function TeacherList({ teachers, students, onAddClick, onEditClick, onDeleteClick, onPrintClick }: TeacherListProps) {
   const [searchTerm, setSearchTerm] = useState('');
 
   // Filter teachers based on name or subject
@@ -159,6 +161,15 @@ export default function TeacherList({ teachers, students, onAddClick, onEditClic
                   {/* Actions column */}
                   <td className="p-3 text-left whitespace-nowrap">
                     <div className="flex gap-1.5 justify-end">
+                      {onPrintClick && (
+                        <button
+                          onClick={() => onPrintClick(teacher)}
+                          className="p-1.5 hover:bg-gray-100 text-gray-500 hover:text-indigo-600 rounded-lg transition-colors cursor-pointer"
+                          title="طباعة وثيقة مستحقات الأستاذ"
+                        >
+                          <Printer className="w-4 h-4" />
+                        </button>
+                      )}
                       <button
                         onClick={() => onEditClick(teacher)}
                         className="p-1.5 hover:bg-gray-100 text-gray-500 hover:text-emerald-700 rounded-lg transition-colors cursor-pointer"

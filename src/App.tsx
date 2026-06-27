@@ -15,6 +15,7 @@ import StudentModal from './components/StudentModal';
 import TeacherModal from './components/TeacherModal';
 import PinLogin from './components/PinLogin';
 import SecuritySettings from './components/SecuritySettings';
+import ReceiptModal from './components/ReceiptModal';
 
 import { motion } from 'motion/react';
 import { 
@@ -168,6 +169,11 @@ export default function App() {
 
   const [isTeacherModalOpen, setIsTeacherModalOpen] = useState(false);
   const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null);
+
+  // Printable receipt state
+  const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
+  const [activeReceiptStudent, setActiveReceiptStudent] = useState<Student | null>(null);
+  const [activeReceiptTeacher, setActiveReceiptTeacher] = useState<Teacher | null>(null);
 
   // Toast / Status Alerts
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
@@ -459,6 +465,11 @@ export default function App() {
               }}
               onEditClick={handleEditStudent}
               onDeleteClick={handleDeleteStudent}
+              onPrintClick={(s) => {
+                setActiveReceiptTeacher(null);
+                setActiveReceiptStudent(s);
+                setIsReceiptModalOpen(true);
+              }}
             />
           )}
 
@@ -472,6 +483,11 @@ export default function App() {
               }}
               onEditClick={handleEditTeacher}
               onDeleteClick={handleDeleteTeacher}
+              onPrintClick={(t) => {
+                setActiveReceiptStudent(null);
+                setActiveReceiptTeacher(t);
+                setIsReceiptModalOpen(true);
+              }}
             />
           )}
 
@@ -479,6 +495,12 @@ export default function App() {
             <DashboardStats
               students={students}
               teachers={teachers}
+              onUpdateStudent={handleSaveStudent}
+              onPrintStudent={(s) => {
+                setActiveReceiptTeacher(null);
+                setActiveReceiptStudent(s);
+                setIsReceiptModalOpen(true);
+              }}
             />
           )}
 
@@ -520,6 +542,18 @@ export default function App() {
         }}
         onSave={handleSaveTeacher}
         editingTeacher={editingTeacher}
+      />
+
+      {/* 5. Printable Receipt Modal */}
+      <ReceiptModal
+        isOpen={isReceiptModalOpen}
+        onClose={() => {
+          setIsReceiptModalOpen(false);
+          setActiveReceiptStudent(null);
+          setActiveReceiptTeacher(null);
+        }}
+        student={activeReceiptStudent}
+        teacher={activeReceiptTeacher}
       />
 
       {/* Footer Branding info */}
